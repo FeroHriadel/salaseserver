@@ -211,3 +211,58 @@ exports.deleteHut = async (req, res) => {
     }
 }
 
+
+
+//SEARCH HUTS + PAGINATION
+exports.searchHuts = async (req, res) => {
+    try {
+        //pagination
+        const perPage = 3;
+        const page = Number(req.body.page) || 1;
+
+        //searchword
+        const searchword = req.body.searchword ?
+            {name: {$regex: req.body.searchword, $options: 'i'}}
+            :
+            {}
+
+        const location = req.body.location ?
+            {location: req.body.location}
+            :
+            {}
+
+        const type = req.body.type ?
+            {type: req.body.type}
+            :
+            {}
+
+        const addedby = req.body.addedby ?
+            {addedby: req.body.addedby}
+            :
+            {}
+
+        const sortby = req.body.sortby && req.body.sortby === 'recent' ?
+            [['updatedAt', 'asc']]
+            :
+            [['name', 'asc']]
+
+        //start search
+        const hutsTotal = await Hut.countDocuments({...searchword, ...location, ...type});
+        const huts = await Hut.find({...searchword, ...location, ...type})
+            .sort(sortby)
+            .limit(perPage)
+            .skip((page - 1) * perPage)
+
+        //error response
+        if (!huts) {
+            return res.status(404).json({error: `No huts matching your criteria found`});
+        }
+
+        //results response
+        res.json({huts, page, numberOfPages: Math.ceil(hutsTotal/perPage)});
+     
+    } catch (err) {
+        console.log(err);
+        res.json({error: `Server error (searchHuts)`})
+    }
+}
