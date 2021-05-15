@@ -1,14 +1,15 @@
 const Hut = require('../models/hutModel');
 const Location = require('../models/locationModel');
 const Type = require('../models/typeModel');
+const User = require('../models/userModel');
 
 
 
 exports.addHut = async (req, res) => {
     try {
         //check required fields
-        const { name, gps, location, type, titleimage, where, objectdescription, water, warning } = req.body;
-        if (!name || !gps || !gps.lat || !gps.long || !location || !type || !titleimage) {
+        const { name, latitude, longitude, location, type, image, where, objectdescription, water, warning, addedby } = req.body;
+        if (!name || !latitude || !longitude || !location || !type || !image) {
             return res.status(400).json({error: `Incomplete data`});
         }
 
@@ -19,11 +20,11 @@ exports.addHut = async (req, res) => {
         }
 
         if (
-            gps.lat > parseFloat(checkLocation.maxLat) || 
-            gps.lat < parseFloat(checkLocation.minLat) || 
-            gps.long > parseFloat(checkLocation.maxLong) || 
-            gps.long < parseFloat(checkLocation.minLong)) {
-                return res.status(400).json({error: `Provided gps is outside Hut's Location range`});
+            parseFloat(latitude) > parseFloat(checkLocation.maxLat) || 
+            parseFloat(latitude) < parseFloat(checkLocation.minLat) || 
+            parseFloat(longitude) > parseFloat(checkLocation.maxLong) || 
+            parseFloat(longitude) < parseFloat(checkLocation.minLong)) {
+                return res.status(400).json({error: `Provided coordinates are outside Hut's Location range`});
         }
 
         //check if type exists
@@ -35,20 +36,23 @@ exports.addHut = async (req, res) => {
         //create a virtual hut
         const hut = new Hut({
             name,
-            gps,
+            latitude,
+            longitude,
             location,
             type,
-            titleimage,
+            image,
             where,
             objectdescription,
             water,
-            warning
+            warning,
+            addedby
         });
 
         if (where) hut.where = where;
         if (objectdescription) hut.objectdescription = objectdescription;
         if (water) hut.water = water;
         if (warning) hut.warning = warning;
+        if (addedby) hut.addedby = addedby;
 
         //check if name is unique
         const hutAlreadyExists = await Hut.findOne({name});
@@ -123,22 +127,44 @@ exports.updateHut = async (req, res) => {
         }
 
         //check body
-        const { name, gps, location, type, titleimage, where, objectdescription, water, warning } = req.body;
-        if (!name || !gps || !gps.lat || !gps.long || !location || !type || !titleimage) {
+        const { name, latitude, longitude, location, type, titleimage, where, objectdescription, water, warning, addedby } = req.body;
+        if (!name || !latitude || !longitude || !location || !type || !titleimage) {
             return res.status(400).json({error: `Incomplete data`});
+        }
+
+        //check if GPS is within Location
+        const checkLocation = await Location.findById(location);
+        if (!checkLocation) {
+            return res.status(404).json({error: `Location not found`});
+        }
+
+        if (
+            parseFloat(latitude) > parseFloat(checkLocation.maxLat) || 
+            parseFloat(latitude) < parseFloat(checkLocation.minLat) || 
+            parseFloat(longitude) > parseFloat(checkLocation.maxLong) || 
+            parseFloat(longitude) < parseFloat(checkLocation.minLong)) {
+                return res.status(400).json({error: `Provided coordinates are outside Hut's Location range`});
+        }
+
+        //check if type exists
+        const checkType = await Type.findById(type);
+        if (!checkType) {
+            return res.status(404).json({error: `Type not found`});
         }
 
         //obj with updated data
         let newHut = {
             name,
-            gps,
+            latitude,
+            longitude,
             location,
             type,
-            titleimage,
+            image,
             where,
             objectdescription,
             water,
-            warning
+            warning,
+            addedby
         };
 
         //check if hut exists

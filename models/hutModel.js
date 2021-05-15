@@ -11,15 +11,14 @@ const hutSchema = new mongoose.Schema(
       required: true,
       unique: true
     },
-    gps: {
-        lat: {
-            type: Number,
-            required: true
-        },
-        long: {
-            type: Number,
-            required: true
-        }
+
+    latitude: {
+        type: String,
+        required: true
+    },
+    longitude: {
+        type: String,
+        required: true
     },
     location: {
       type: ObjectId,
@@ -29,7 +28,7 @@ const hutSchema = new mongoose.Schema(
       type: ObjectId,
       ref: "Type",
     },
-    titleimage: {
+    image: {
         type: Object,
         required: true
     },
@@ -49,6 +48,10 @@ const hutSchema = new mongoose.Schema(
       type: String,
       default: 'No warning have been provided'
     },
+    addedby: {
+      type: ObjectId,
+      ref: "User"
+    }
   },
   { timestamps: true }
 );
