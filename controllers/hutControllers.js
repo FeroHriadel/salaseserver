@@ -219,7 +219,7 @@ exports.searchHuts = async (req, res) => {
 
     try {
         //pagination
-        const perPage = 6;
+        const perPage = 10;
         const page = Number(req.body.page) || 1;
 
         //searchword
@@ -238,28 +238,24 @@ exports.searchHuts = async (req, res) => {
             :
             {}
 
-        const addedby = req.body.addedby ?
-            {email: {$regex: req.body.addedby, $options: 'i'}} //could be a problem as Im really looking for addedby.email
-            :
-            {}
-
         const sortby = req.body.sortby && req.body.sortby === 'recent' ?
             [['updatedAt', 'desc']]
             :
-            req.body.sortby && req.body.sortby === 'alphabetically' ? //unchecked
+            req.body.sortby && req.body.sortby === 'alphabetically' ?
                 [['name', 'asc']]
                 :
                 [['updatedAt', 'asc']] //if no sortby return ordered from oldest to latest
 
         //start search
-        const hutsTotal = await Hut.countDocuments({...searchword, ...location, ...type, ...addedby });
-        const huts = await Hut.find({...searchword, ...location, ...type, ...addedby })
+        const hutsTotal = await Hut.countDocuments({...searchword, ...location, ...type });
+        const huts = await Hut.find({...searchword, ...location, ...type })
             .populate('addedby', 'email')
             .populate('location', 'name')
             .populate('type', 'name')
             .sort(sortby)
             .limit(perPage)
             .skip((page - 1) * perPage)
+
 
         //error response
         if (!huts) {
