@@ -215,6 +215,8 @@ exports.deleteHut = async (req, res) => {
 
 //SEARCH HUTS + PAGINATION
 exports.searchHuts = async (req, res) => {
+    console.table(req.body) //
+
     try {
         //pagination
         const perPage = 6;
@@ -237,7 +239,7 @@ exports.searchHuts = async (req, res) => {
             {}
 
         const addedby = req.body.addedby ?
-            {addedby: {$regex: req.body.addedby, $options: 'i'}} //could be a problem as Im really looking for addedby.email
+            {email: {$regex: req.body.addedby, $options: 'i'}} //could be a problem as Im really looking for addedby.email
             :
             {}
 
@@ -265,6 +267,7 @@ exports.searchHuts = async (req, res) => {
         }
 
         //results response
+        // console.table({huts, page, numberOfPages: Math.ceil(hutsTotal/perPage)}) //
         res.json({huts, page, numberOfPages: Math.ceil(hutsTotal/perPage)});
      
     } catch (err) {
