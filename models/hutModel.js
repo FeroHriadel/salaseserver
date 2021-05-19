@@ -23,10 +23,12 @@ const hutSchema = new mongoose.Schema(
     location: {
       type: ObjectId,
       ref: "Location",
+      required: true
     },
     type: {
       type: ObjectId,
       ref: "Type",
+      required: true
     },
     image: {
         type: Object,

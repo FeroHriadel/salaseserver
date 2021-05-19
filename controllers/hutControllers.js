@@ -52,7 +52,7 @@ exports.addHut = async (req, res) => {
         if (objectdescription) hut.objectdescription = objectdescription;
         if (water) hut.water = water;
         if (warning) hut.warning = warning;
-        if (addedby) hut.addedby = addedby;
+        if (addedby) hut.addedby = addedby
 
         //check if name is unique
         const hutAlreadyExists = await Hut.findOne({name});
@@ -79,7 +79,7 @@ exports.addHut = async (req, res) => {
 //GET ALL HUTS
 exports.getHuts = async (req, res) => {
     try {
-        const huts = await Hut.find({});
+        const huts = await Hut.find({}).populate('addedby', 'email');
         if (!huts) {
             return res.status(404).json({error: `Huts not found`});
         }
@@ -102,7 +102,7 @@ exports.getHut = async (req, res) => {
             return res.staus(400).json({error: `No hutId provided`});
         }
 
-        const hut = await Hut.findById(hutId).populate('location', 'name').populate('type', 'name');
+        const hut = await Hut.findById(hutId).populate('location', 'name').populate('type', 'name').populate('addedby', 'email');
         if (!hut) {
             return res.status(404).json({error: `Hut could not be found`});
         }
@@ -217,7 +217,7 @@ exports.deleteHut = async (req, res) => {
 exports.searchHuts = async (req, res) => {
     try {
         //pagination
-        const perPage = 3;
+        const perPage = 6;
         const page = Number(req.body.page) || 1;
 
         //searchword
@@ -237,18 +237,24 @@ exports.searchHuts = async (req, res) => {
             {}
 
         const addedby = req.body.addedby ?
-            {addedby: req.body.addedby}
+            {addedby: {$regex: req.body.addedby, $options: 'i'}} //could be a problem as Im really looking for addedby.email
             :
             {}
 
         const sortby = req.body.sortby && req.body.sortby === 'recent' ?
-            [['updatedAt', 'asc']]
+            [['updatedAt', 'desc']]
             :
-            [['name', 'asc']]
+            req.body.sortby && req.body.sortby === 'alphabetically' ? //unchecked
+                [['name', 'asc']]
+                :
+                [['updatedAt', 'asc']] //if no sortby return ordered from oldest to latest
 
         //start search
-        const hutsTotal = await Hut.countDocuments({...searchword, ...location, ...type});
-        const huts = await Hut.find({...searchword, ...location, ...type})
+        const hutsTotal = await Hut.countDocuments({...searchword, ...location, ...type, ...addedby });
+        const huts = await Hut.find({...searchword, ...location, ...type, ...addedby })
+            .populate('addedby', 'email')
+            .populate('location', 'name')
+            .populate('type', 'name')
             .sort(sortby)
             .limit(perPage)
             .skip((page - 1) * perPage)
