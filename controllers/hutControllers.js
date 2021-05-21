@@ -126,9 +126,9 @@ exports.updateHut = async (req, res) => {
             return res.status(400).json({error: `No hutId provided`});
         }
 
-        //check body
-        const { name, latitude, longitude, location, type, titleimage, where, objectdescription, water, warning, addedby } = req.body;
-        if (!name || !latitude || !longitude || !location || !type || !titleimage) {
+        //get values from body
+        const { name, latitude, longitude, location, type, image, where, objectdescription, water, warning, addedby } = req.body;
+        if (!name || !latitude || !longitude || !location || !type || !image) {
             return res.status(400).json({error: `Incomplete data`});
         }
 
@@ -185,6 +185,40 @@ exports.updateHut = async (req, res) => {
 
 
 
+//UPDATE HUT IMAGE
+exports.updateHutImage = async (req, res) => {
+    try {
+        //check params
+        const hutId = req.params.hutId;
+        if (!hutId) {
+            return res.status(400).json({error: `No hutId provided`});
+        }
+        
+        //check body for image
+        const { image } = req.body;
+        if (!image) {
+            return res.status(400).json({error: `Incomplete data`});
+        }
+
+        //check if hut exists
+        let hut = await Hut.findById(hutId);
+        if (!hut) {
+            return res.status(404).json({error: `Hut not found`});
+        }
+
+        //update hut
+        hut = await Hut.findByIdAndUpdate(hutId, {image}, {new: true});
+        res.json(hut);
+        
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({error: `Server error (updateHut)`}); 
+    }
+}
+
+
+
+//DELETE HUT
 exports.deleteHut = async (req, res) => {
     try {
         const hutId = req.params.hutId;
@@ -215,8 +249,6 @@ exports.deleteHut = async (req, res) => {
 
 //SEARCH HUTS + PAGINATION
 exports.searchHuts = async (req, res) => {
-    console.table(req.body) //
-
     try {
         //pagination
         const perPage = 10;
