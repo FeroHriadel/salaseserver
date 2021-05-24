@@ -13,6 +13,10 @@ exports.addHut = async (req, res) => {
             return res.status(400).json({error: `Incomplete data`});
         }
 
+        if (!addedby) {
+            return res.status(500).json({error: `Server error. App failed to identify the user.`});
+        }
+
         //check if GPS is within Location
         const checkLocation = await Location.findById(location);
         if (!checkLocation) {
