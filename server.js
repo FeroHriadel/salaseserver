@@ -12,6 +12,7 @@ const cloudinaryRoutes = require('./routes/cloudinaryRoutes');
 const locationRoutes = require('./routes/locationRoutes');
 const typeRoutes = require('./routes/typeRoutes');
 const hutRoutes = require('./routes/hutRoutes');
+const commentRoutes = require('./routes/commentRoutes');
 
 
 
@@ -36,6 +37,7 @@ app.use('/api', cloudinaryRoutes);
 app.use('/api', locationRoutes);
 app.use('/api', typeRoutes);
 app.use('/api', hutRoutes);
+app.use('/api', commentRoutes);
 
 
 
