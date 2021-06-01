@@ -23,6 +23,10 @@ const userSchema = new mongoose.Schema(
         resetPasswordLink: {
             data: String,
             default: ''
+        },
+        resetPasswordLink: {
+            type: String,
+            default: ''
         }
     },
     { timestamps: true }
@@ -40,8 +44,10 @@ userSchema.pre('save', async function(next) {
 })
 
 userSchema.methods.matchPassword = async function(enteredPassword) {
-    return await bcrypt.compare(enteredPassword, this.password)
-} //REMEMBER to call this ASYNCHRONOUSLY (with await)!!!
+    console.log('********************comparing password***********');//
+    console.log('********************compare password result:*****', await bcrypt.compare(enteredPassword, this.password));//
+    return await bcrypt.compare(enteredPassword, this.password);
+}
 
 
 

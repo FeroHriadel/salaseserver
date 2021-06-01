@@ -307,3 +307,25 @@ exports.searchHuts = async (req, res) => {
         res.json({error: `Server error (searchHuts)`})
     }
 }
+
+
+
+exports.getHutsByLocation = async (req, res) => {
+    try {
+        const locationId = req.params.locationId;
+        if (!locationId) {
+            return res.status(400).json({error: `No locationId in params`});
+        }
+
+        const huts = await Hut.find({location: locationId});
+        if (!huts) {
+            return res.status(404).json({error: `No huts found`});
+        }
+
+        res.json(huts);
+
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({error: `Server error (getHutsByLocation)`});
+    }
+}
