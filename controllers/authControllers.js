@@ -3,6 +3,9 @@ const jwt = require('jsonwebtoken');
 const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 const bcrypt = require('bcryptjs');
+const { OAuth2Client } = require('google-auth-library');
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID); 
+
 
 
 
@@ -217,7 +220,6 @@ exports.signin = async (req, res) => {
 
 
 
-
 //SIGN OUT
 exports.signout = (req, res) => {
     res.clearCookie('token'); //clear cookie
@@ -310,3 +312,64 @@ exports.resetPassword = async (req, res) => {
 
 
 
+exports.getGoogleClientId = (req, res) => {
+    const googleClientId = process.env.GOOGLE_CLIENT_ID;
+    if (!googleClientId) {
+        console.log('googleClientId didnt load');
+        res.status(500).json({error: `googleClientId didn't load`});
+        return;
+    }
+
+    res.json(googleClientId);
+}
+
+
+
+//GOOGLE SIGNIN
+exports.googleSignin = (req, res) => {
+    try {
+        //get the tokenId you got from google btn 
+        const idToken = req.body.tokenId;
+
+        //verify the token
+        client.verifyIdToken({ idToken, audience: process.env.GOOGLE_CLIENT_ID })
+            .then(response => {
+                //console.log(response);
+                //get email_verified, name, email from response. jti is some code.
+                const { email_verified, email, jti } = response.payload;
+
+                if (email_verified) {
+                    //check if user exists in db (find by email => we got email from Oauth)
+                    User.findOne({ email }).exec((err, user) => {
+                        //user exists in db => respond with token and user details
+                        if (user) {
+                            const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
+                            res.cookie('token', token);
+                            const { _id, email, role } = user;
+                            return res.json({ token, user: { _id, email, role } });
+                        //user not in db => sign them up & in => respond with token & user details
+                        } else {
+                            let password = jti //only needed 'cos of userModel
+                            user = new User({ email, password });
+                            user.save((err, data) => { //data = user details from db
+                                if (err) {
+                                    return res.status(400).json({error: `User could not be saved`})
+                                }
+
+                                const token = jwt.sign({ _id: data._id }, process.env.JWT_SECRET);
+                                res.cookie('token', token, { expiresIn: '1d' });
+                                const { _id, email, role } = data;
+                                return res.json({ token, user: { _id, email, role } });
+                            })
+                        }
+                    })
+                } else {
+                    return res.status(400).json({error: `Google signin failed`})
+                }
+            })
+
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({error: `Server error (googleSignin)`})
+    }
+}
