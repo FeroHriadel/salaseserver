@@ -317,7 +317,7 @@ exports.getHutsByLocation = async (req, res) => {
             return res.status(400).json({error: `No locationId in params`});
         }
 
-        const huts = await Hut.find({location: locationId});
+        const huts = await Hut.find({location: locationId}).populate('type', 'name').populate('location', 'name');
         if (!huts) {
             return res.status(404).json({error: `No huts found`});
         }
