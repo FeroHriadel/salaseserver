@@ -373,3 +373,108 @@ exports.googleSignin = (req, res) => {
         res.status(500).json({error: `Server error (googleSignin)`})
     }
 }
+
+
+
+//SEARCH USERS + PAGINATION
+//doesn't return the user who made this request => so admin cannot self-delete
+exports.searchUsers = async (req, res) => {
+    try {
+        //pagination
+        const perPage = 10;
+        const page = Number(req.body.page) || 1;
+
+        //search criteria
+        const searchword = req.body.searchword ?
+        {email: {$regex: req.body.searchword, $options: 'i'}}
+        :
+        {}
+
+        const role = req.body.role ?
+        {role: req.body.role}
+        :
+        {}
+
+        const sortby = req.body.sortby && req.body.sortby === 'recent' ?
+        [['createdAt', 'desc']]
+        :
+        req.body.sortby && req.body.sortby === 'alphabetically' ?
+            [['email', 'asc']]
+            :
+            [['createdAt', 'asc']] //if no sortby return ordered from oldest to latest
+
+        //start search
+        const usersTotal = await User.countDocuments({...searchword, ...role });
+        const users = await User.find({...searchword, ...role, _id: {$ne: req.user._id} })
+            .sort(sortby)
+            .limit(perPage)
+            .skip((page - 1) * perPage);
+
+        //error response
+        if (!users) {
+            return res.status(404).json({error: `No users matching your criteria found`});
+        }
+
+        //results response
+        res.json({users, page, numberOfPages: Math.ceil(usersTotal/perPage)});
+        
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({error: `Server error (getUsers)`})
+    }
+}
+
+
+
+//DELETE USER
+exports.deleteUser = (req, res) => {
+    try {
+        const userId = req.params.userId;
+        if (!userId) {
+            return res.status(400).json({error: `userId is required`})
+        }
+
+        User.findByIdAndRemove(userId, (err, success) => {
+            if (err) {
+                console.log(err);
+                res.status(500).json({error: `User could not be deleted`});
+                return;
+            }
+
+            res.json({message: `User deleted`});
+        });
+        
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({error: `Server error (deleteUser)`})
+    }
+}
+
+
+
+//CHANGE USER'S ROLE
+exports.changeUsersRole = async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        if (!userId) {
+            return res.status(400).json({error: `userId is required`});
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({error: `User was not found`});
+        }
+
+        let newRole = 'user';
+        if (user.role === 'user') {
+            newRole = 'admin';
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(userId, {role: newRole}, {new: true});
+        res.json(updatedUser);
+        
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({error: `Server error (changeUsersRole)`})
+    }
+}
