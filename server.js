@@ -14,6 +14,7 @@ const typeRoutes = require('./routes/typeRoutes');
 const hutRoutes = require('./routes/hutRoutes');
 const commentRoutes = require('./routes/commentRoutes');
 const topPickRoutes = require('./routes/topPickRoutes');
+const contactRoutes = require('./routes/contactRoutes');
 
 
 
@@ -40,6 +41,7 @@ app.use('/api', typeRoutes);
 app.use('/api', hutRoutes);
 app.use('/api', commentRoutes);
 app.use('/api', topPickRoutes);
+app.use('/api', contactRoutes);
 
 
 

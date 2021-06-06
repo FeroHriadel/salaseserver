@@ -2,6 +2,7 @@ const Hut = require('../models/hutModel');
 const Location = require('../models/locationModel');
 const Type = require('../models/typeModel');
 const User = require('../models/userModel');
+const TopPick = require('../models/topPickModel');
 
 
 
@@ -234,6 +235,13 @@ exports.deleteHut = async (req, res) => {
         if (!hut) {
             res.status(404).json({error: `Hut could not be found`});
         }
+
+        //also check if hut is in topPicks and remove it from there
+        const isInTopPicks = await TopPick.findOne({hutId: hutId});
+        if (isInTopPicks) {
+            await TopPick.findOneAndRemove({hutId: hutId});
+        }
+
 
         hut.remove((err, data) => {
             if (err) {
