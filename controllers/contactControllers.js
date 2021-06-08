@@ -14,7 +14,11 @@ exports.sendForm = (req, res) => {
             from: process.env.EMAIL_FROM,
             to: process.env.EMAIL_FROM,
             subject: `Message from Salase`,
-            html: `<p>${message}</p>`
+            html: `
+                <p><bold>${email}</bold> sent you the following message:</p>
+                <br />
+                <p>${message}</p>
+                `
         };
 
         sgMail.send(emailData).then(sent => {

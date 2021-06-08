@@ -14,15 +14,19 @@ exports.preSignup = async (req, res) => {
     try {
         //grab email & password from request
         const { email, password } = req.body;
+        if (!email || !password) {
+            return res.status(400).json({error: `Email and Password are required (preSignup)`})
+        }
+        console.log(email, password); //////////////
 
         //check if user is new
         const user = await User.findOne({email: email.toLowerCase()});
         if (user) {
-            return res.staus(401).json({error: `Email is already taken`});
+            return res.status(401).json({error: `Email is already taken`});
         }
 
         //make a token with user email & password
-        const token = jwt.sign({email, password}, process.env.JWT_ACCOUNT_ACTIVATION, {expiresIn: '10min'});
+        const token = jwt.sign({email, password}, process.env.JWT_ACCOUNT_ACTIVATION, {expiresIn: '30min'});
 
         //send email
         const emailData = {
@@ -237,6 +241,7 @@ exports.forgotPassword = async (req, res) => {
     if (!email || !email.includes('@') || !email.includes('.')) {
         res.status(400).json({error: `A valid email address is required`});
     }
+    console.log(email); //////////////////
 
     //find user by email
     const user = await User.findOne({email});
@@ -244,8 +249,8 @@ exports.forgotPassword = async (req, res) => {
         res.status(404).json({error: `User not found (resetPassword)`});
     }
 
-    //put user._id in a token that is only valid for 10 minutes
-    const token = jwt.sign({ _id: user._id }, process.env.JWT_RESET_PASSWORD, { expiresIn: '10m' });
+    //put user._id in a token that is only valid for 30 minutes
+    const token = jwt.sign({ _id: user._id }, process.env.JWT_RESET_PASSWORD, { expiresIn: '30m' });
 
     // prepare email
     const emailData = {
@@ -262,14 +267,15 @@ exports.forgotPassword = async (req, res) => {
     };
 
     //update resetPasswordLink in db
-    return user.updateOne({ resetPasswordLink: token }, (err, success) => {
+    user.updateOne({ resetPasswordLink: token }, (err, success) => {
         if (err) {
             return res.json({error: `User's resetPasswordLink could not be updated (forgotPassword)`});
         } else {
             //send email
             sgMail.send(emailData).then(sent => {
+                console.log(sent) //////////
                 //respond with message
-                return res.json({message: `Email has been sent to ${email}. Follow the instructions to reset your password. Link expires in 10min.`});
+                return res.json({message: `Email has been sent to ${email}. Follow the instructions to reset your password. Link expires in 30min.`});
             });
         }
     });

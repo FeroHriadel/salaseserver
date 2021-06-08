@@ -112,3 +112,26 @@ exports.deleteComment = async (req, res) => {
     }
 }
 
+
+
+//GET NUMNBER OF COMMENTS
+exports.getNumberOfComments = async (req, res) => {
+    try {
+        const hutid  = req.params.hutid;
+        if (!hutid) {
+            return res.status(400).json({error: `No hutid in req.params (getComments)`});
+        }
+
+        const commentsTotal = await Comment.countDocuments({hutid});
+        if (!commentsTotal) {
+            return res.status(500).json({error: `Bad hutid or 0 comments for this hut`});
+        }
+
+        return res.json(commentsTotal);
+        
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({error: `Server error (getNumberOfComments)`})
+    }
+}
+
