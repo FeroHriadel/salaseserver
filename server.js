@@ -26,10 +26,11 @@ connectDB();
 app.use(morgan('dev'));
 app.use(bodyParser({limit: '50mb'}));
 app.use(cookieParser());
+app.use(cors());////
 
-if (process.env.NODE_ENV === 'development') {
-    app.use(cors({ origin: `${process.env.CLIENT_URL}` }));
-}
+// if (process.env.NODE_ENV === 'development') {
+//     app.use(cors({ origin: `${process.env.CLIENT_URL}` }));
+// }
 
 
 
